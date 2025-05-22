@@ -3,83 +3,92 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Miles Waite - Home</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+    <title>Miles Waite</title>
     <style>
-        /* Body & page */
-        body {
-            margin: 0;
+        /* Reset and base */
+        body, html {
+            margin: 0; padding: 0; height: 100%;
             background: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #222;
-            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
-        /* Header container */
-        header {
+        /* Navigation bar */
+        nav {
             display: flex;
-            justify-content: center;
-            gap: 3rem;
-            padding: 1rem 0;
+            justify-content: space-evenly;
+            align-items: center;
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid #ccc;
             font-weight: 600;
-            font-size: 1.2rem;
+            letter-spacing: 1px;
             user-select: none;
-            background: #f8f8f8;
-            border-bottom: 1px solid #ddd;
-            letter-spacing: 0.05em;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 10;
         }
 
-        header > div {
+        nav > div {
             cursor: pointer;
+            padding: 8px 12px;
             transition: color 0.3s ease;
         }
-        header > div:hover {
-            color: #0077ff;
+
+        nav > div:hover {
+            color: #d11a2a; /* subtle red on hover */
         }
 
-        /* Canvas container for centering */
+        /* Container for canvas to center and add fade */
         #canvas-container {
+            height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - 56px); /* full viewport minus header */
+            padding-top: 60px; /* nav height */
+        }
+
+        canvas {
             opacity: 0;
             animation: fadeIn 2s forwards;
         }
 
-        /* Fade-in animation */
         @keyframes fadeIn {
             to {
                 opacity: 1;
             }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
 </head>
 <body>
-<header>
+<nav>
     <div>Projects</div>
     <div>Music</div>
     <div>Code</div>
     <div>Links</div>
-</header>
+</nav>
 
 <div id="canvas-container"></div>
 
 <script>
     let angle = 0;
-    let invertColors;
+    let whiteColor;
+    let redColor;
 
     function setup() {
         const canvas = createCanvas(600, 600, WEBGL);
         canvas.parent('canvas-container');
         noFill();
-
-        // Pick random inversion once on load
-        invertColors = random() > 0.5;
+        whiteColor = color(255, 255, 255);
+        redColor = color(255, 0, 0);
     }
 
     function draw() {
-        background(invertColors ? 0 : 255);
+        background(0);
 
         // Camera setup
         let camRadius = 850;
@@ -88,24 +97,28 @@
         let camZ = sin(angle * 0.3) * camRadius;
         camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
 
-        // Outer cube
+        // Outer cube - always white
         push();
         rotateX(angle * 0.5);
         rotateY(angle);
-        drawCube(200);
+        drawCube(200, whiteColor);
         pop();
 
-        // Inner cube
+        // Inner cube color lerp from white to red
+        let lerpAmt = (sin(angle) + 1) / 2;
+        let innerColor = lerpColor(whiteColor, redColor, lerpAmt);
+
+        // Inner cube with color transition
         push();
         rotateX(-angle * 0.8);
         rotateZ(angle * 0.3);
-        drawCube(80);
+        drawCube(80, innerColor);
         pop();
 
         angle += 0.01;
     }
 
-    function drawCube(size) {
+    function drawCube(size, col) {
         let points = [];
         for (let x = -1; x <= 1; x += 2) {
             for (let y = -1; y <= 1; y += 2) {
@@ -123,22 +136,18 @@
                     abs(d - size * sqrt(2)) < 1 ||
                     abs(d - size * sqrt(3)) < 1
                 ) {
-                    drawDepthLine(points[i], points[j]);
+                    drawDepthLine(points[i], points[j], col);
                 }
             }
         }
     }
 
-    function drawDepthLine(p1, p2) {
+    function drawDepthLine(p1, p2, col) {
         let avgZ = (p1.z + p2.z) / 2;
         let alpha = map(avgZ, -300, 300, 50, 255, true);
-        stroke(
-            invertColors ? 255 : 0,
-            invertColors ? alpha : alpha
-        );
+        stroke(red(col), green(col), blue(col), alpha);
         line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
     }
 </script>
 </body>
 </html>
-
