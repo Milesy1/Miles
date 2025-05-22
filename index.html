@@ -3,53 +3,80 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Miles Waite - Light Version</title>
+    <title>Miles Waite</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
     <style>
+        /* Reset & basics */
         body, html {
             margin: 0; padding: 0; height: 100%;
-            background: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: black;
-            overflow: hidden;
-        }
-
-        nav {
+            overflow-x: hidden;
             display: flex;
-            justify-content: space-evenly;
-            align-items: center;
-            height: 60px;
-            background: white;
-            border-bottom: 1px solid #ccc;
-            font-weight: 600;
-            letter-spacing: 1px;
+            flex-direction: column;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 1.5s ease, color 1.5s ease;
+        }
+
+        :root {
+            --bg-black: #000;
+            --bg-white: #fff;
+            --text-white: #fff;
+            --text-black: #000;
+            --yellow-bright: #fff822;
+            --blue-bright: #2288ff;
+            --red-bright: #ff2222;
+        }
+
+        /* Theme variables set by JS */
+        body.black-theme {
+            --bg-color: var(--bg-black);
+            --text-color: var(--text-white);
+        }
+        body.white-theme {
+            --bg-color: var(--bg-white);
+            --text-color: var(--text-black);
+        }
+
+        header {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            padding: 1.5rem 0;
+            font-weight: 700;
+            font-size: 1.25rem;
             user-select: none;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
-            z-index: 10;
-            color: black;
+            letter-spacing: 0.08em;
         }
 
-        nav > div {
+        header div {
             cursor: pointer;
-            padding: 8px 12px;
-            transition: color 0.3s ease;
+            position: relative;
+            padding-bottom: 4px;
+        }
+        header div::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 3px;
+            background: currentColor;
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+        header div:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
         }
 
-        nav > div:hover {
-            color: #e67e22; /* warm orange on hover */
-        }
-
+        /* Container for canvas */
         #canvas-container {
-            height: 100vh;
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-top: 60px;
-        }
-
-        canvas {
             opacity: 0;
             animation: fadeIn 2s forwards;
         }
@@ -60,113 +87,165 @@
             }
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
 </head>
 <body>
-<nav>
-    <div>Projects</div>
-    <div>Music</div>
-    <div>Code</div>
-    <div>Links</div>
-</nav>
+<header>
+    <div>Projects.</div>
+    <div>Music.</div>
+    <div>Code.</div>
+    <div>Links.</div>
+</header>
 
 <div id="canvas-container"></div>
 
 <script>
+    // Randomly pick theme on load
+    const isBlackTheme = Math.random() < 0.5;
+    document.body.classList.add(isBlackTheme ? 'black-theme' : 'white-theme');
+
+    // p5 sketch inside container
     let angle = 0;
-    const blackColor = [0, 0, 0];
-    const yellowColor = [255, 255, 0];
-    const blueColor = [0, 0, 255];
+    let innerColorCycle = 0; // from 0 to TWO_PI
 
-    function setup() {
-        const canvas = createCanvas(600, 600, WEBGL);
-        canvas.parent('canvas-container');
-        noFill();
-    }
+    const canvasContainer = document.getElementById('canvas-container');
 
-    function draw() {
-        background(255);
+    new p5((p) => {
+        p.setup = function() {
+            p.createCanvas(600, 600, p.WEBGL).parent(canvasContainer);
+            p.noFill();
+            p.strokeWeight(2);
+        };
 
-        // Camera
-        let camRadius = 850;
-        let camX = cos(angle * 0.3) * camRadius;
-        let camY = -100;
-        let camZ = sin(angle * 0.3) * camRadius;
-        camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
+        p.draw = function() {
+            // Background color from CSS var for smooth transition consistency
+            p.background(getComputedStyle(document.body).getPropertyValue('--bg-color').trim());
 
-        // Outer cube - always black lines
-        push();
-        rotateX(angle * 0.5);
-        rotateY(angle);
-        drawCube(200, blackColor);
-        pop();
+            // Camera setup
+            const camRadius = 850;
+            const camX = p.cos(angle * 0.3) * camRadius;
+            const camY = -100;
+            const camZ = p.sin(angle * 0.3) * camRadius;
+            p.camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
 
-        // Inner cube color cycling black → yellow → blue → black
-        let cycleSpeed = 0.5;
-        let t = (angle * cycleSpeed) % (Math.PI * 2);
-        let innerColor;
+            // Outer cube: pure white always
+            p.push();
+            p.stroke(isBlackTheme ? 255 : 0, isBlackTheme ? 255 : 0, isBlackTheme ? 255 : 0);
+            p.rotateX(angle * 0.5);
+            p.rotateY(angle);
+            drawCube(p, 200);
+            p.pop();
 
-        if (t < Math.PI * 2 / 3) {
-            // black to yellow
-            let amt = map(t, 0, Math.PI * 2 / 3, 0, 1);
-            innerColor = lerpColorArray(blackColor, yellowColor, amt);
-        } else if (t < Math.PI * 4 / 3) {
-            // yellow to blue
-            let amt = map(t, Math.PI * 2 / 3, Math.PI * 4 / 3, 0, 1);
-            innerColor = lerpColorArray(yellowColor, blueColor, amt);
-        } else {
-            // blue to black
-            let amt = map(t, Math.PI * 4 / 3, Math.PI * 2, 0, 1);
-            innerColor = lerpColorArray(blueColor, blackColor, amt);
-        }
+            // Inner cube colors depend on theme
+            p.push();
+            p.rotateX(-angle * 0.8);
+            p.rotateZ(angle * 0.3);
 
-        push();
-        rotateX(-angle * 0.8);
-        rotateZ(angle * 0.3);
-        drawCube(80, innerColor);
-        pop();
+            // Cycle inner cube color smoothly
+            innerColorCycle += 0.01;
+            if (innerColorCycle > p.TWO_PI) innerColorCycle = 0;
 
-        angle += 0.01;
-    }
+            let innerStroke;
+            if (isBlackTheme) {
+                // Cycle: white → red → blue
+                // Use sin/cos waves for smooth transition
+                const r = 255;
+                const g = 0;
+                const b = 0;
 
-    function drawCube(size, col) {
-        let points = [];
-        for (let x = -1; x <= 1; x += 2) {
-            for (let y = -1; y <= 1; y += 2) {
-                for (let z = -1; z <= 1; z += 2) {
-                    points.push(createVector(x * size, y * size, z * size));
+                // Using a sine wave to blend colors over TWO_PI
+                // white to red to blue, cycle
+                const phase = innerColorCycle;
+
+                // Map phase [0, 2PI] to blend colors
+                // We'll blend white (255,255,255) to red(255,0,0) to blue(0,0,255)
+                // Split into 3 phases:
+                // 0 to 2PI/3 : white to red
+                // 2PI/3 to 4PI/3 : red to blue
+                // 4PI/3 to 2PI : blue to white
+
+                let rC, gC, bC;
+                if (phase < p.TWO_PI / 3) {
+                    // white to red
+                    const t = phase / (p.TWO_PI / 3);
+                    rC = 255;
+                    gC = 255 * (1 - t);
+                    bC = 255 * (1 - t);
+                } else if (phase < (2 * p.TWO_PI) / 3) {
+                    // red to blue
+                    const t = (phase - p.TWO_PI / 3) / (p.TWO_PI / 3);
+                    rC = 255 * (1 - t);
+                    gC = 0;
+                    bC = 255 * t;
+                } else {
+                    // blue to white
+                    const t = (phase - (2 * p.TWO_PI) / 3) / (p.TWO_PI / 3);
+                    rC = 255 * t;
+                    gC = 255 * t;
+                    bC = 255;
+                }
+                innerStroke = p.color(rC, gC, bC);
+            } else {
+                // White bg theme: black → bright yellow → bright blue
+
+                const phase = innerColorCycle;
+                // black(0,0,0) to yellow(255,248,34) to blue(34,136,255)
+                // same 3 phases cycle as above
+
+                let rC, gC, bC;
+                const yellow = {r:255, g:248, b:34};
+                const blue = {r:34, g:136, b:255};
+
+                if (phase < p.TWO_PI / 3) {
+                    // black to yellow
+                    const t = phase / (p.TWO_PI / 3);
+                    rC = yellow.r * t;
+                    gC = yellow.g * t;
+                    bC = yellow.b * t;
+                } else if (phase < (2 * p.TWO_PI) / 3) {
+                    // yellow to blue
+                    const t = (phase - p.TWO_PI / 3) / (p.TWO_PI / 3);
+                    rC = yellow.r + (blue.r - yellow.r) * t;
+                    gC = yellow.g + (blue.g - yellow.g) * t;
+                    bC = yellow.b + (blue.b - yellow.b) * t;
+                } else {
+                    // blue to black
+                    const t = (phase - (2 * p.TWO_PI) / 3) / (p.TWO_PI / 3);
+                    rC = blue.r * (1 - t);
+                    gC = blue.g * (1 - t);
+                    bC = blue.b * (1 - t);
+                }
+                innerStroke = p.color(rC, gC, bC);
+            }
+
+            p.stroke(innerStroke);
+            drawCube(p, 80);
+            p.pop();
+
+            angle += 0.01;
+        };
+
+        function drawCube(p, size) {
+            let points = [];
+            for (let x = -1; x <= 1; x += 2) {
+                for (let y = -1; y <= 1; y += 2) {
+                    for (let z = -1; z <= 1; z += 2) {
+                        points.push(p.createVector(x, y, z).mult(size / 2));
+                    }
+                }
+            }
+
+            // Draw edges
+            for (let i = 0; i < points.length; i++) {
+                for (let j = i + 1; j < points.length; j++) {
+                    const d = p5.Vector.sub(points[i], points[j]).mag();
+                    if (Math.abs(d - size) < 0.1) {
+                        p.line(points[i].x, points[i].y, points[i].z,
+                            points[j].x, points[j].y, points[j].z);
+                    }
                 }
             }
         }
-
-        for (let i = 0; i < points.length; i++) {
-            for (let j = i + 1; j < points.length; j++) {
-                let d = p5.Vector.dist(points[i], points[j]);
-                if (
-                    abs(d - size * 2) < 1 ||
-                    abs(d - size * sqrt(2)) < 1 ||
-                    abs(d - size * sqrt(3)) < 1
-                ) {
-                    drawDepthLine(points[i], points[j], col);
-                }
-            }
-        }
-    }
-
-    function drawDepthLine(p1, p2, col) {
-        let avgZ = (p1.z + p2.z) / 2;
-        let alpha = map(avgZ, -300, 300, 50, 255, true);
-        stroke(col[0], col[1], col[2], alpha);
-        line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
-    }
-
-    function lerpColorArray(c1, c2, t) {
-        return [
-            lerp(c1[0], c2[0], t),
-            lerp(c1[1], c2[1], t),
-            lerp(c1[2], c2[2], t),
-        ];
-    }
+    });
 </script>
 </body>
 </html>
