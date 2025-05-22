@@ -3,93 +3,136 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Miles Waite - Developer & Music Maker</title>
+    <title>Miles Waite - Home</title>
     <style>
-        body {
+        /* Reset & base */
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            background: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #121212;
-            color: #eee;
-            margin: 0;
-            padding: 0 1.5rem;
             display: flex;
             flex-direction: column;
-            min-height: 100vh;
+            align-items: center;
+            color: #222;
         }
+        /* Header with spaced headings */
         header {
-            padding: 2rem 0 1rem;
-            border-bottom: 1px solid #333;
-            text-align: center;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-around;
+            padding: 20px 0;
+            border-bottom: 2px solid #eee;
+            font-weight: 600;
+            font-size: 1.2rem;
+            user-select: none;
         }
-        h1 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 2.5rem;
-            letter-spacing: 0.05em;
-        }
-        p.tagline {
-            color: #888;
-            font-style: italic;
-            margin-top: 0.3rem;
-        }
-        main {
-            flex-grow: 1;
-            padding: 2rem 0;
-            max-width: 720px;
-            margin: 0 auto;
-        }
-        section {
-            margin-bottom: 3rem;
-        }
-        h2 {
-            border-bottom: 2px solid #555;
-            padding-bottom: 0.3rem;
-        }
-        a {
-            color: #66ccff;
+        header a {
+            color: #222;
             text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s ease;
         }
-        a:hover {
-            text-decoration: underline;
+        header a:hover {
+            color: #0077ff;
         }
-        footer {
-            text-align: center;
-            font-size: 0.9rem;
-            padding: 1rem 0;
-            border-top: 1px solid #333;
-            color: #555;
+
+        /* Canvas container for centering */
+        #canvas-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+        }
+        canvas {
+            display: block;
+            border: 1px solid #ddd;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 6px;
         }
     </style>
 </head>
 <body>
-
 <header>
-    <h1>Miles Waite</h1>
-    <p class="tagline">Developer. Music Maker. Walker.</p>
+    <a href="#projects">Projects</a>
+    <a href="#music">Music</a>
+    <a href="#code">Code</a>
 </header>
 
-<main>
-    <section>
-        <h2>About Me</h2>
-        <p>Hey, I’m Miles — I build cool software, make music, and love long walks. This site is where I’ll share my projects and jams.</p>
-    </section>
+<div id="canvas-container">
+    <!-- p5.js will insert the canvas here -->
+</div>
 
-    <section>
-        <h2>Latest Music</h2>
-        <p>Check out my latest beats and tunes on <a href="https://soundcloud.com/mileswaite" target="_blank" rel="noopener noreferrer">SoundCloud</a> or follow me on <a href="https://spotify.com/artist/mileswaite" target="_blank" rel="noopener noreferrer">Spotify</a>.</p>
-    </section>
+<script src="https://cdn.jsdelivr.net/npm/p5@1.6.0/lib/p5.min.js"></script>
+<script>
+    let angle = 0;
+    let canvas;
 
-    <section>
-        <h2>Projects</h2>
-        <ul>
-            <li><a href="https://github.com/mileswaite" target="_blank" rel="noopener noreferrer">My GitHub</a> — code and open source work</li>
-            <li><a href="https://miles-6pu.pages.dev/dev-tool" target="_blank" rel="noopener noreferrer">Max for Live ChatGPT Tool</a> — modular music AI integration</li>
-        </ul>
-    </section>
-</main>
+    function setup() {
+        canvas = createCanvas(600, 600, WEBGL);
+        noFill();
+        // Move canvas into container div
+        canvas.parent('canvas-container');
+    }
 
-<footer>
-    &copy; 2025 Miles Waite — All rights reserved.
-</footer>
+    function draw() {
+        background(255);
 
+        let camRadius = 850;
+        let camX = cos(angle * 0.3) * camRadius;
+        let camY = -100;
+        let camZ = sin(angle * 0.3) * camRadius;
+        camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
+
+        push();
+        rotateX(angle * 0.5);
+        rotateY(angle);
+        drawCube(200);
+        pop();
+
+        push();
+        rotateX(-angle * 0.8);
+        rotateZ(angle * 0.3);
+        drawCube(80);
+        pop();
+
+        angle += 0.01;
+    }
+
+    function drawCube(size) {
+        let points = [];
+        for (let x = -1; x <= 1; x += 2) {
+            for (let y = -1; y <= 1; y += 2) {
+                for (let z = -1; z <= 1; z += 2) {
+                    points.push(createVector(x * size, y * size, z * size));
+                }
+            }
+        }
+
+        for (let i = 0; i < points.length; i++) {
+            for (let j = i + 1; j < points.length; j++) {
+                let d = p5.Vector.dist(points[i], points[j]);
+                if (
+                    abs(d - size * 2) < 1 ||
+                    abs(d - size * sqrt(2)) < 1 ||
+                    abs(d - size * sqrt(3)) < 1
+                ) {
+                    drawDepthLine(points[i], points[j]);
+                }
+            }
+        }
+    }
+
+    function drawDepthLine(p1, p2) {
+        let avgZ = (p1.z + p2.z) / 2;
+        let alpha = map(avgZ, -300, 300, 50, 255, true);
+        stroke(34, 34, 34, alpha);
+        line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+    }
+</script>
 </body>
 </html>
+
