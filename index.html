@@ -90,10 +90,10 @@
 </head>
 <body>
 <header>
-    <div>Projects.</div>
-    <div>Music.</div>
-    <div>Code.</div>
-    <div>Links.</div>
+    <div>Projects</div>
+    <div>Music</div>
+    <div>Code</div>
+    <div>Links</div>
 </header>
 
 <div id="canvas-container"></div>
@@ -132,7 +132,7 @@
             p.stroke(isBlackTheme ? 255 : 0, isBlackTheme ? 255 : 0, isBlackTheme ? 255 : 0);
             p.rotateX(angle * 0.5);
             p.rotateY(angle);
-            drawCube(p, 200);
+            drawCube(p, 400);
             p.pop();
 
             // Inner cube colors depend on theme
@@ -147,37 +147,19 @@
             let innerStroke;
             if (isBlackTheme) {
                 // Cycle: white → red → blue
-                // Use sin/cos waves for smooth transition
-                const r = 255;
-                const g = 0;
-                const b = 0;
-
-                // Using a sine wave to blend colors over TWO_PI
-                // white to red to blue, cycle
                 const phase = innerColorCycle;
-
-                // Map phase [0, 2PI] to blend colors
-                // We'll blend white (255,255,255) to red(255,0,0) to blue(0,0,255)
-                // Split into 3 phases:
-                // 0 to 2PI/3 : white to red
-                // 2PI/3 to 4PI/3 : red to blue
-                // 4PI/3 to 2PI : blue to white
-
                 let rC, gC, bC;
                 if (phase < p.TWO_PI / 3) {
-                    // white to red
                     const t = phase / (p.TWO_PI / 3);
                     rC = 255;
                     gC = 255 * (1 - t);
                     bC = 255 * (1 - t);
                 } else if (phase < (2 * p.TWO_PI) / 3) {
-                    // red to blue
                     const t = (phase - p.TWO_PI / 3) / (p.TWO_PI / 3);
                     rC = 255 * (1 - t);
                     gC = 0;
                     bC = 255 * t;
                 } else {
-                    // blue to white
                     const t = (phase - (2 * p.TWO_PI) / 3) / (p.TWO_PI / 3);
                     rC = 255 * t;
                     gC = 255 * t;
@@ -186,29 +168,21 @@
                 innerStroke = p.color(rC, gC, bC);
             } else {
                 // White bg theme: black → bright yellow → bright blue
-
                 const phase = innerColorCycle;
-                // black(0,0,0) to yellow(255,248,34) to blue(34,136,255)
-                // same 3 phases cycle as above
-
-                let rC, gC, bC;
                 const yellow = {r:255, g:248, b:34};
                 const blue = {r:34, g:136, b:255};
-
+                let rC, gC, bC;
                 if (phase < p.TWO_PI / 3) {
-                    // black to yellow
                     const t = phase / (p.TWO_PI / 3);
                     rC = yellow.r * t;
                     gC = yellow.g * t;
                     bC = yellow.b * t;
                 } else if (phase < (2 * p.TWO_PI) / 3) {
-                    // yellow to blue
                     const t = (phase - p.TWO_PI / 3) / (p.TWO_PI / 3);
                     rC = yellow.r + (blue.r - yellow.r) * t;
                     gC = yellow.g + (blue.g - yellow.g) * t;
                     bC = yellow.b + (blue.b - yellow.b) * t;
                 } else {
-                    // blue to black
                     const t = (phase - (2 * p.TWO_PI) / 3) / (p.TWO_PI / 3);
                     rC = blue.r * (1 - t);
                     gC = blue.g * (1 - t);
@@ -218,7 +192,7 @@
             }
 
             p.stroke(innerStroke);
-            drawCube(p, 80);
+            drawCube(p, 160);
             p.pop();
 
             angle += 0.01;
@@ -249,3 +223,4 @@
 </script>
 </body>
 </html>
+
