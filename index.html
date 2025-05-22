@@ -13,9 +13,10 @@
             overflow-x: hidden;
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-color);
+            background-color: #d3d3d3; /* light grey background */
             color: var(--text-color);
             transition: background-color 1.5s ease, color 1.5s ease;
+            align-items: center;
         }
 
         :root {
@@ -47,6 +48,9 @@
             font-size: 1.25rem;
             user-select: none;
             letter-spacing: 0.08em;
+            width: 100%;
+            max-width: 1000px;
+            box-sizing: border-box;
         }
 
         header div {
@@ -71,20 +75,35 @@
             transform-origin: left;
         }
 
-        /* Container for canvas */
+        /* Container for canvas and square background */
         #canvas-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            animation: fadeIn 2s forwards;
+            position: relative;
+            width: 540px;
+            height: 540px;
+            margin-bottom: 3rem;
+        }
+        #square-bg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 378px;
+            height: 378px;
+            transform: translate(-50%, -50%);
+            /* background-color set dynamically */
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            z-index: 0;
         }
 
-        @keyframes fadeIn {
-            to {
-                opacity: 1;
-            }
+        /* Canvas placed over square */
+        canvas {
+            position: absolute !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 1;
+            display: block;
+            outline: none;
         }
     </style>
 </head>
@@ -96,12 +115,18 @@
     <div>Links</div>
 </header>
 
-<div id="canvas-container"></div>
+<div id="canvas-container">
+    <div id="square-bg"></div>
+</div>
 
 <script>
     // Randomly pick theme on load
     const isBlackTheme = Math.random() < 0.5;
     document.body.classList.add(isBlackTheme ? 'black-theme' : 'white-theme');
+
+    // Set square background to opposite of outer cube color
+    const squareBg = document.getElementById('square-bg');
+    squareBg.style.backgroundColor = isBlackTheme ? '#fff' : '#000';
 
     // p5 sketch inside container
     let angle = 0;
@@ -111,7 +136,7 @@
 
     new p5((p) => {
         p.setup = function() {
-            p.createCanvas(600, 600, p.WEBGL).parent(canvasContainer);
+            p.createCanvas(540, 540, p.WEBGL).parent(canvasContainer);
             p.noFill();
             p.strokeWeight(2);
         };
@@ -127,12 +152,12 @@
             const camZ = p.sin(angle * 0.3) * camRadius;
             p.camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
 
-            // Outer cube: pure white always
+            // Outer cube: pure white or black depending on theme
             p.push();
             p.stroke(isBlackTheme ? 255 : 0, isBlackTheme ? 255 : 0, isBlackTheme ? 255 : 0);
             p.rotateX(angle * 0.5);
             p.rotateY(angle);
-            drawCube(p, 400);
+            drawCube(p, 360);
             p.pop();
 
             // Inner cube colors depend on theme
@@ -192,7 +217,7 @@
             }
 
             p.stroke(innerStroke);
-            drawCube(p, 160);
+            drawCube(p, 144);
             p.pop();
 
             angle += 0.01;
@@ -223,4 +248,6 @@
 </script>
 </body>
 </html>
+
+
 
