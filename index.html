@@ -3,18 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Miles Waite</title>
+    <title>Miles Waite - Light Version</title>
     <style>
-        /* Reset and base */
         body, html {
             margin: 0; padding: 0; height: 100%;
             background: white;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: #222;
+            color: black;
             overflow: hidden;
         }
 
-        /* Navigation bar */
         nav {
             display: flex;
             justify-content: space-evenly;
@@ -30,6 +28,7 @@
             top: 0;
             left: 0;
             z-index: 10;
+            color: black;
         }
 
         nav > div {
@@ -39,16 +38,15 @@
         }
 
         nav > div:hover {
-            color: #d11a2a; /* subtle red on hover */
+            color: #e67e22; /* warm orange on hover */
         }
 
-        /* Container for canvas to center and add fade */
         #canvas-container {
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-top: 60px; /* nav height */
+            padding-top: 60px;
         }
 
         canvas {
@@ -76,39 +74,52 @@
 
 <script>
     let angle = 0;
-    let whiteColor;
-    let redColor;
+    const blackColor = [0, 0, 0];
+    const yellowColor = [255, 255, 0];
+    const blueColor = [0, 0, 255];
 
     function setup() {
         const canvas = createCanvas(600, 600, WEBGL);
         canvas.parent('canvas-container');
         noFill();
-        whiteColor = color(255, 255, 255);
-        redColor = color(255, 0, 0);
     }
 
     function draw() {
-        background(0);
+        background(255);
 
-        // Camera setup
+        // Camera
         let camRadius = 850;
         let camX = cos(angle * 0.3) * camRadius;
         let camY = -100;
         let camZ = sin(angle * 0.3) * camRadius;
         camera(camX, camY, camZ, 0, 0, 0, 0, 1, 0);
 
-        // Outer cube - always white
+        // Outer cube - always black lines
         push();
         rotateX(angle * 0.5);
         rotateY(angle);
-        drawCube(200, whiteColor);
+        drawCube(200, blackColor);
         pop();
 
-        // Inner cube color lerp from white to red
-        let lerpAmt = (sin(angle) + 1) / 2;
-        let innerColor = lerpColor(whiteColor, redColor, lerpAmt);
+        // Inner cube color cycling black → yellow → blue → black
+        let cycleSpeed = 0.5;
+        let t = (angle * cycleSpeed) % (Math.PI * 2);
+        let innerColor;
 
-        // Inner cube with color transition
+        if (t < Math.PI * 2 / 3) {
+            // black to yellow
+            let amt = map(t, 0, Math.PI * 2 / 3, 0, 1);
+            innerColor = lerpColorArray(blackColor, yellowColor, amt);
+        } else if (t < Math.PI * 4 / 3) {
+            // yellow to blue
+            let amt = map(t, Math.PI * 2 / 3, Math.PI * 4 / 3, 0, 1);
+            innerColor = lerpColorArray(yellowColor, blueColor, amt);
+        } else {
+            // blue to black
+            let amt = map(t, Math.PI * 4 / 3, Math.PI * 2, 0, 1);
+            innerColor = lerpColorArray(blueColor, blackColor, amt);
+        }
+
         push();
         rotateX(-angle * 0.8);
         rotateZ(angle * 0.3);
@@ -145,8 +156,16 @@
     function drawDepthLine(p1, p2, col) {
         let avgZ = (p1.z + p2.z) / 2;
         let alpha = map(avgZ, -300, 300, 50, 255, true);
-        stroke(red(col), green(col), blue(col), alpha);
+        stroke(col[0], col[1], col[2], alpha);
         line(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+    }
+
+    function lerpColorArray(c1, c2, t) {
+        return [
+            lerp(c1[0], c2[0], t),
+            lerp(c1[1], c2[1], t),
+            lerp(c1[2], c2[2], t),
+        ];
     }
 </script>
 </body>
